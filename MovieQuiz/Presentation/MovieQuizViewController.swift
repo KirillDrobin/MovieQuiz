@@ -104,6 +104,8 @@ final class MovieQuizViewController: UIViewController {
         questionField.font = UIFont(name: "YSDisplay-Bold", size: 23)
         yesButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
         noButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
+        yesButton.isEnabled = true
+        noButton.isEnabled = true
         
         show(quiz: QuizStepViewModel(image: UIImage(named: "The Godfather") ?? UIImage(),
                                      question: "Рейтинг этого фильма больше чем 6?",
@@ -183,6 +185,8 @@ final class MovieQuizViewController: UIViewController {
             let viewModel = convert(model: nextQuestion)
             show(quiz: viewModel)
             clearBorder()
+            yesButton.isEnabled = true
+            noButton.isEnabled = true
         }
     }
     
@@ -200,6 +204,8 @@ final class MovieQuizViewController: UIViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             self.showNextQuestionOrResults()
         }
+        yesButton.isEnabled = false
+        noButton.isEnabled = false
     }
     
     //функция отображения скругления постера
@@ -219,7 +225,8 @@ final class MovieQuizViewController: UIViewController {
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         let currentQuestion = questions[currentQuestionIndex]
         let givenAnswer = false
-        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)    }
+        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+    }
 }
 
 
