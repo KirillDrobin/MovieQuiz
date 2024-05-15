@@ -104,8 +104,6 @@ final class MovieQuizViewController: UIViewController {
         questionField.font = UIFont(name: "YSDisplay-Bold", size: 23)
         yesButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
         noButton.titleLabel?.font = UIFont(name: "YSDisplay-Medium", size: 20)
-        yesButton.isEnabled = true
-        noButton.isEnabled = true
         
         show(quiz: QuizStepViewModel(image: UIImage(named: "The Godfather") ?? UIImage(),
                                      question: "Рейтинг этого фильма больше чем 6?",
@@ -133,7 +131,7 @@ final class MovieQuizViewController: UIViewController {
         questionField.text = step.question
         counterLabel.text = step.questionNumber
     }
-    //функция вывода алерта с результатом квиза
+    //функция вывода алерта с результатом квиза и возвратом в первый вопрос
     private func show(quiz result: QuizResultsViewModel) {
         let alert = UIAlertController(
             title: result.title,
@@ -151,7 +149,8 @@ final class MovieQuizViewController: UIViewController {
         
         alert.addAction(action)
         self.present(alert, animated: true, completion: nil)
-        
+        yesButton.isEnabled = true
+        noButton.isEnabled = true
         clearBorder()
     }
     
