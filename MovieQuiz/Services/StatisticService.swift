@@ -1,9 +1,9 @@
-
 import Foundation
 
 final class StatisticService: StatisticServiceProtocol {
     
-  var gamesCount: Int {
+    // общее количество игр
+    var gamesCount: Int {
         get {
             let gamesCount = storage.integer(forKey: Keys.gamesCount.rawValue)
             return gamesCount
@@ -13,6 +13,7 @@ final class StatisticService: StatisticServiceProtocol {
         }
     }
     
+    // лучший результат
     var bestGame: GameResult {
         get {
             let correct = storage.integer(forKey: Keys.correct.rawValue)
@@ -20,7 +21,6 @@ final class StatisticService: StatisticServiceProtocol {
             let date = storage.object(forKey: Keys.date.rawValue) as? Date ?? Date()
             return GameResult(correct: correct, total: total, date: date)
         }
-        
         set(newValue) {
             storage.set(newValue.correct, forKey: Keys.correct.rawValue)
             storage.set(newValue.total, forKey: Keys.total.rawValue)
@@ -28,6 +28,7 @@ final class StatisticService: StatisticServiceProtocol {
         }
     }
     
+    // метод подсчета лучшего результата
     func store(correct count: Int, total amount: Int) {
         gamesCount += 1
         storage.set(amount, forKey: Keys.total.rawValue)
@@ -39,12 +40,13 @@ final class StatisticService: StatisticServiceProtocol {
             storage.set(count, forKey: Keys.correct.rawValue)
             storage.set(Date(), forKey: Keys.date.rawValue)
         }
-        sumCorrectAnsw += record.correct
+        sumCorrectAnswers += record.correct
     }
-
+    
+    // средняя точность
     var totalAccuracy: Double {
         get {
-            Double(sumCorrectAnsw)/Double(gamesCount) * Double(100/10)
+            Double(sumCorrectAnswers)/Double(gamesCount) * Double(100/10)
         }
     }
     
@@ -58,7 +60,7 @@ final class StatisticService: StatisticServiceProtocol {
         case date
     }
     
-    private var sumCorrectAnsw = 0
+    private var sumCorrectAnswers = 0
 }
-    
+
 

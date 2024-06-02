@@ -1,7 +1,7 @@
 
 import Foundation
 
-class QuestionFactory: QuestionFactoryProtocol {
+final class QuestionFactory: QuestionFactoryProtocol {
     
     weak var delegate: QuestionFactoryDelegate?
     func setDelegateQuiz(delegate: QuestionFactoryDelegate) {
@@ -56,8 +56,8 @@ class QuestionFactory: QuestionFactoryProtocol {
             delegate?.didReceiveNextQuestion(question: nil)
             return
         }
-
+        
         let question = questions[safe: index]
-           delegate?.didReceiveNextQuestion(question: question)
+        delegate?.didReceiveNextQuestion(question: question)
     }
 }

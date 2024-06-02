@@ -1,16 +1,9 @@
-//
-//  AlertPresenter.swift
-//  MovieQuiz
-//
-//  Created by Кирилл Дробин on 23.05.2024.
-//
-
 import UIKit
 
-class AlertPresenter: AlertPresenterDelegate {
+final class AlertPresenter: AlertPresenterDelegate {
     
-   weak var alertView: AlertPresenterProtocol?
-
+    weak var alertView: AlertPresenterProtocol?
+    
     func alertShow(alertModel: AlertModel) {
         let alert = UIAlertController(
             title: alertModel.title,
@@ -21,9 +14,7 @@ class AlertPresenter: AlertPresenterDelegate {
         
         alert.addAction(action)
         alertView?.present(alert, animated: true, completion: nil)
-
     }
- 
-    }
+}
 
 

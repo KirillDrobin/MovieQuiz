@@ -11,6 +11,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     //количество правильных ответов
     private var correctAnswers = 0
     
+    //константа количества вопросов
     private let questionsAmount: Int = 10
     
     private var questionFactory: QuestionFactoryProtocol = QuestionFactory()
@@ -21,7 +22,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     
     private var alertPresenter: AlertPresenterProtocol?
     
-    private var statisticService: StatisticService?
+    private var statisticService: StatisticServiceProtocol = StatisticService()
     
     @IBOutlet private var imageView: UIImageView!
     
@@ -73,13 +74,15 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         }
     }
     
-    //функция создания вью модели вопроса из структуры QuizQuestion
+    //метод создания вью модели вопроса из структуры QuizQuestion
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
-        let currentQuestion = QuizStepViewModel(image: UIImage(named: model.image) ?? UIImage(), question: model.text, questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
+        let currentQuestion = QuizStepViewModel(image: UIImage(named: model.image) ?? UIImage(),
+                                                question: model.text,
+                                                questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
         return currentQuestion
     }
     
-    //функция вывода вопроса
+    //метод вывода вопроса
     private func show(quiz step: QuizStepViewModel) {
         imageView.image = step.image
         questionField.text = step.question
@@ -89,9 +92,14 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     // MARK: - AlertPresenterProtocol
     func showNextQuestionOrResults() {
         if currentQuestionIndex == questionsAmount - 1 {
-            statisticService?.store(correct: correctAnswers, total: questionsAmount)
+            statisticService.store(correct: correctAnswers, total: questionsAmount)
             
-            let messageText = "Ваш результат: \(correctAnswers)/\(questionsAmount) \n" + "Количество сыгранных квизов: \(statisticService?.gamesCount ?? 0) \n" + "Рекорд: \(statisticService?.bestGame.correct ?? 0)/\(questionsAmount) (\(statisticService?.bestGame.date.dateTimeString ?? " ")) \n" + "Средняя точность: \(String(format: "%.2f", statisticService?.totalAccuracy ?? 0))%"
+            let messageText = """
+                Ваш результат: \(correctAnswers)/\(questionsAmount)
+                Количество сыгранных квизов: \(statisticService.gamesCount)
+                Рекорд: \(statisticService.bestGame.correct)/\(questionsAmount) (\(statisticService.bestGame.date.dateTimeString))
+                Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%
+                """
             
             let alertModel = AlertModel(title: "Этот раунд окончен!",
                                         message: messageText,
@@ -108,10 +116,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         }
     }
     
-    //функция вывода результата ответа на вопрос
+    //метод вывода результата ответа на вопрос
     private func showAnswerResult(isCorrect: Bool) {
-        yesButton.isEnabled = false
-        noButton.isEnabled = false
+        changeStateButton(isEnabled: false)
         imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 8
         imageView.layer.cornerRadius = 20
@@ -124,14 +131,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self = self else {return}
             self.showNextQuestionOrResults()
-            yesButton.isEnabled = true
-            noButton.isEnabled = true
+            changeStateButton(isEnabled: true)
             clearBorder()
         }
         
     }
     
-    //функция отображения скругления постера
+    //метод отображения скругления постера
     private func clearBorder() {
         imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 8
@@ -139,6 +145,11 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         imageView.layer.borderColor = UIColor.clear.cgColor
     }
     
+    //метод включения/отключения кнопок вариантов ответа
+    private func changeStateButton(isEnabled: Bool) {
+        noButton.isEnabled = isEnabled
+        yesButton.isEnabled = isEnabled
+    }
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
         guard let currentQuestion = currentQuestion else {
             return
