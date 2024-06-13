@@ -46,6 +46,9 @@ final class QuestionFactory: QuestionFactoryProtocol {
             do {
                 imageData = try Data(contentsOf: movie.resizedImageURL)
             } catch {
+                DispatchQueue.main.async {
+                    self.delegate?.didFailToLoadData(with: error)
+                }
                 print("Failed to load image")
             }
             
@@ -58,7 +61,6 @@ final class QuestionFactory: QuestionFactoryProtocol {
             let question = QuizQuestion(image: imageData,
                                         text: text,
                                         correctAnswer: correctAnswer)
-            
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 self.delegate?.didReceiveNextQuestion(question: question)

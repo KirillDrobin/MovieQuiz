@@ -4,15 +4,14 @@ import UIKit
 final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, AlertPresenterProtocol {
     
     func didLoadDataFromServer() {
-        activityIndicator.isHidden = true
+        hideLoadingIndicator()
         questionFactory?.requestNextQuestion()
     }
     
     func didFailToLoadData(with error: any Error) {
         showNetworkError(message: error.localizedDescription)
     }
-    
-    
+        
     // MARK: - Lifecycle
     
     //номер текущего вопроса
@@ -105,6 +104,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     
     // MARK: - AlertPresenterProtocol
     func showNextQuestionOrResults() {
+        
+        hideLoadingIndicator()
+        
         if currentQuestionIndex == questionsAmount - 1 {
             statisticService.store(correct: correctAnswers, total: questionsAmount)
             
@@ -126,22 +128,24 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             alertPresenterDelegate?.alertShow(alertModel: alertModel)
         } else {
             currentQuestionIndex += 1
-            questionFactory?.requestNextQuestion()
+            didLoadDataFromServer()
         }
     }
     
     //метод вывода результата ответа на вопрос
     private func showAnswerResult(isCorrect: Bool) {
         changeStateButton(isEnabled: false)
-        
+        showLoadingIndicator()
         imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 8
         imageView.layer.cornerRadius = 20
         if isCorrect {
             imageView.layer.borderColor = UIColor.ypGreen.cgColor
             correctAnswers += 1
+            
         } else {
             imageView.layer.borderColor = UIColor.ypRed.cgColor
+
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self = self else {return}
