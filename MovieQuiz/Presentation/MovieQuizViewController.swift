@@ -11,17 +11,17 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     func didFailToLoadData(with error: any Error) {
         showNetworkError(message: error.localizedDescription)
     }
-        
+    
     // MARK: - Lifecycle
     
-    //номер текущего вопроса
-    private var currentQuestionIndex = 0
+    //    //номер текущего вопроса
+    //    private var currentQuestionIndex = 0
     
     //количество правильных ответов
     private var correctAnswers = 0
     
-    //константа количества вопросов
-    private let questionsAmount: Int = 10
+    //    //константа количества вопросов
+    //    private let questionsAmount: Int = 10
     
     private var questionFactory: QuestionFactoryProtocol?
     
@@ -32,6 +32,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     private var alertPresenter: AlertPresenterProtocol?
     
     private var statisticService: StatisticServiceProtocol = StatisticService()
+    
+    private let presenter = MovieQuizPresenter()
     
     @IBOutlet private var imageView: UIImageView!
     
@@ -76,7 +78,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         }
         
         currentQuestion = question
-        let viewModel = convert(model: question)
+        let viewModel = presenter.convert(model: question)
         show(quiz: viewModel)
         
         DispatchQueue.main.async {
@@ -84,22 +86,23 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         }
     }
     
-    //метод создания вью модели вопроса из структуры QuizQuestion
-    private func convert(model: QuizQuestion) -> QuizStepViewModel {
-        
-        let image = UIImage(data: model.image) ?? UIImage()
-        
-        let currentQuestion = QuizStepViewModel(image: image,
-                                                question: model.text,
-                                                questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
-        return currentQuestion
-    }
+    //    //метод создания вью модели вопроса из структуры QuizQuestion
+    //    private func convert(model: QuizQuestion) -> QuizStepViewModel {
+    //
+    //        let image = UIImage(data: model.image) ?? UIImage()
+    //
+    //        let currentQuestion = QuizStepViewModel(image: image,
+    //                                                question: model.text,
+    //                                                questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
+    //        return currentQuestion
+    //    }
     
     //метод вывода вопроса
     private func show(quiz step: QuizStepViewModel) {
         imageView.image = step.image
         questionField.text = step.question
         counterLabel.text = step.questionNumber
+        changeStateButton(isEnabled: true)
     }
     
     // MARK: - AlertPresenterProtocol
@@ -107,13 +110,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
         
         hideLoadingIndicator()
         
-        if currentQuestionIndex == questionsAmount - 1 {
-            statisticService.store(correct: correctAnswers, total: questionsAmount)
+        if presenter.isLastQuestion() {
+            statisticService.store(correct: correctAnswers, total: presenter.questionsAmount)
             
             let messageText = """
-                Ваш результат: \(correctAnswers)/\(questionsAmount)
+                Ваш результат: \(correctAnswers)/\(presenter.questionsAmount)
                 Количество сыгранных квизов: \(statisticService.gamesCount)
-                Рекорд: \(statisticService.bestGame.correct)/\(questionsAmount) (\(statisticService.bestGame.date.dateTimeString))
+                Рекорд: \(statisticService.bestGame.correct)/\(presenter.questionsAmount) (\(statisticService.bestGame.date.dateTimeString))
                 Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%
                 """
             
@@ -121,13 +124,15 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
                                         message: messageText,
                                         buttonText:"Сыграть еще раз",
                                         completion: {[weak self] in
-                self?.currentQuestionIndex = 0
+                //                self?.currentQuestionIndex = 0
+                self?.presenter.resetQuestionIndex()
                 self?.correctAnswers = 0
                 self?.questionFactory?.requestNextQuestion()
             })
             alertPresenterDelegate?.alertShow(alertModel: alertModel)
         } else {
-            currentQuestionIndex += 1
+            //            currentQuestionIndex += 1
+            presenter.switchToNextQuestion()
             didLoadDataFromServer()
         }
     }
@@ -145,12 +150,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
             
         } else {
             imageView.layer.borderColor = UIColor.ypRed.cgColor
-
+            
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self = self else {return}
             self.showNextQuestionOrResults()
-            changeStateButton(isEnabled: true)
+            //            changeStateButton(isEnabled: true)
             clearBorder()
         }
     }
@@ -187,7 +192,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
                                          buttonText:"Попробовать еще раз",
                                          completion: {[weak self] in
             guard let self = self else { return }
-            self.currentQuestionIndex = 0
+            //            self.currentQuestionIndex = 0
+            presenter.resetQuestionIndex()
             self.correctAnswers = 0
             self.questionFactory?.requestNextQuestion()
         })
