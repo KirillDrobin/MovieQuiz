@@ -69,11 +69,11 @@ final class MovieQuizUITests: XCTestCase {
         XCTAssertNotEqual(firstPosterData, secondPosterData)
     }
     func testAlertShow() {
-        
-        let alert = app.alerts["Game results"]
+        sleep(5)
+        let alert = app.alerts["Alert"]
         for _ in 1...10{
             app.buttons["No"].tap()
-            sleep(1)
+            sleep(3)
         }
         
         XCTAssertTrue(alert.exists)
@@ -82,13 +82,13 @@ final class MovieQuizUITests: XCTestCase {
     }
     
     func testAlertDismiss() {
-        sleep(2)
+        sleep(5)
         for _ in 1...10 {
             app.buttons["No"].tap()
-            sleep(2)
+            sleep(3)
         }
         
-        let alert = app.alerts["Game results"]
+        let alert = app.alerts["Alert"]
         alert.buttons.firstMatch.tap()
         
         sleep(2)

@@ -12,6 +12,7 @@ final class AlertPresenter: AlertPresenterDelegate {
         
         let action = UIAlertAction(title: alertModel.buttonText, style: .default) {_ in alertModel.completion()}
         
+        alert.view.accessibilityIdentifier = "Alert"
         alert.addAction(action)
         alertView?.present(alert, animated: true, completion: nil)
     }

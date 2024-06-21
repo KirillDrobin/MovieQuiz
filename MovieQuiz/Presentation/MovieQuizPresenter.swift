@@ -1,18 +1,43 @@
 import UIKit
 
-final class MovieQuizPresenter {
-    //номер текущего вопроса
+final class MovieQuizPresenter: QuestionFactoryDelegate {
+    
+    private var statisticService: StatisticServiceProtocol = StatisticService()
+    
+    private var currentQuestion: QuizQuestion?
+    
+    private var questionFactory: QuestionFactoryProtocol?
+    
+    private weak var viewController: MovieQuizViewControllerProtocol?
+    
     private var currentQuestionIndex = 0
     
-    //количества вопросов в сесcии
-    let questionsAmount: Int = 10
+    private var correctAnswers = 0
     
-    var currentQuestion: QuizQuestion?
+    private let questionsAmount: Int = 10
     
-    weak var viewController: MovieQuizViewController?
+    var alertResultMessage: String?
+    
+    init(viewController: MovieQuizViewControllerProtocol) {
+        self.viewController = viewController
+        
+        statisticService = StatisticService()
+        
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        questionFactory?.loadData()
+        viewController.showLoadingIndicator()
+    }
     
     
-    //метод создания вью модели вопроса из структуры QuizQuestion
+    func didLoadDataFromServer() {
+        viewController?.hideLoadingIndicator()
+        questionFactory?.requestNextQuestion()
+    }
+    
+    func didFailToLoadData(with error: any Error) {
+        viewController?.showNetworkError(message: error.localizedDescription)
+    }
+    
     func convert(model: QuizQuestion) -> QuizStepViewModel {
         
         let image = UIImage(data: model.image) ?? UIImage()
@@ -21,6 +46,68 @@ final class MovieQuizPresenter {
                                                 question: model.text,
                                                 questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
         return currentQuestion
+    }
+    
+    
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question = question else {
+            return
+        }
+        
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.viewController?.show(quiz: viewModel)
+        }
+    }
+    
+    func showNextQuestionOrResults() {
+        
+        viewController?.hideLoadingIndicator()
+        
+        if self.isLastQuestion() {
+            statisticService.store(correct: correctAnswers, total: self.questionsAmount)
+            
+            alertResultMessage = """
+                Ваш результат: \(correctAnswers)/\(self.questionsAmount)
+                Количество сыгранных квизов: \(statisticService.gamesCount)
+                Рекорд: \(statisticService.bestGame.correct)/\(self.questionsAmount) (\(statisticService.bestGame.date.dateTimeString))
+                Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%
+                """
+            viewController?.showAlertResult()
+        } else {
+            self.switchToNextQuestion()
+            didLoadDataFromServer()
+            viewController?.clearBorder()
+        }
+    }
+    
+    func restartGame() {
+        currentQuestionIndex = 0
+        correctAnswers = 0
+        questionFactory?.requestNextQuestion()
+        viewController?.clearBorder()
+    }
+    
+    
+    func showAnswerResult(isCorrect: Bool) {
+        didAnswer(isCorrectAnswer: isCorrect)
+        viewController?.changeStateButton(isEnabled: false)
+        
+        viewController?.highlightImageBorder(isCorrectAnswer: isCorrect)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self else { return }
+            self.showNextQuestionOrResults()
+            viewController?.changeStateButton(isEnabled: true)
+        }
+    }
+    
+    func didAnswer(isCorrectAnswer: Bool) {
+        if isCorrectAnswer {
+            correctAnswers += 1
+        }
     }
     
     func isLastQuestion() -> Bool {
@@ -36,19 +123,19 @@ final class MovieQuizPresenter {
     }
     
     func yesButtonClicked() {
-        guard let currentQuestion = currentQuestion else {
-            return
-        }
-        let givenAnswer = true
-        viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+        didAnswer(isYes: true)
     }
     
     func noButtonClicked() {
+        didAnswer(isYes: false)
+    }
+    
+    private func didAnswer(isYes: Bool) {
         guard let currentQuestion = currentQuestion else {
             return
         }
-        let givenAnswer = false
-        viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+        let givenAnswer = isYes
+        
+        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
     }
-    
 }
