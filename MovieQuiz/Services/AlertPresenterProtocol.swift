@@ -1,5 +1,5 @@
 import UIKit
 
 protocol AlertPresenterProtocol: UIViewController {
-    func showNextQuestionOrResults()
+    func showAlertResult()
 }
